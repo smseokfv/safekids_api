@@ -1,0 +1,33 @@
+# src/main/resources/application.yml
+
+# 1. 스프링 애플리케이션 기본 설정
+spring:
+  application:
+    name: safenow-service # 프로젝트 이름을 여기에 맞게 변경하세요 (예: safenow-service)
+  # profiles:
+  #   active: dev # 개발 환경 활성화 (선택 사항)
+
+# 2. 서버 포트 설정 (기본은 8080)
+server:
+  port: 8080
+
+# 3. Springdoc OpenAPI (Swagger) 설정
+springdoc:
+  swagger-ui:
+    # Swagger UI에 접근할 수 있는 기본 URL을 설정합니다.
+    # 이 경로로 접속하면 Swagger UI가 표시됩니다.
+    # 예: http://localhost:8080/swagger-ui.html
+    path: /swagger-ui.html
+
+    # Swagger UI가 로드할 OpenAPI 명세 파일의 URL을 지정합니다.
+    # 이 예시에서는 src/main/resources/swagger.yml 파일을 로드합니다.
+    # 만약 swagger.yml이 src/main/resources/openapi/swagger.yml에 있다면
+    # url: /api-docs/openapi/swagger.yml 로 변경해야 합니다.
+    url: /api-docs/swagger.yml
+
+  api-docs:
+    # OpenAPI 명세 (JSON/YAML) 자체에 접근할 수 있는 경로를 설정합니다.
+    # 예: http://localhost:8080/api-docs/swagger.yml (위 url과 연결됨)
+    path: /api-docs
+    # 기본적으로 YAML 형식으로 제공하지만, JSON으로도 가능합니다.
+    # enabled: true (기본값 true)
