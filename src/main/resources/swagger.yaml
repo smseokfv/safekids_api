@@ -24,6 +24,8 @@ servers:
   - url: https://petstore3.swagger.io/api/v3
 
 tags:
+  - name: user management
+    description: 사용자 계정 관련 작업
   - name: safety
     description: Everything about your Pets
   - name: sos
@@ -34,6 +36,188 @@ tags:
     description: Access to Petstore orders
 
 paths:
+  /users/signup/email:
+    post:
+      tags:
+        - user management
+      summary: 이메일 중복 확인 후 회원가입
+      operationId: 이메일_중복_확인_후_회원가입
+      responses:
+        '200':
+          description: 성공적으로 처리되었습니다.
+        '400':
+          description: 잘못된 요청입니다.
+        '401':
+          description: 인증 실패
+        '500':
+          description: 서버 오류
+
+  /users/verify/phone:
+    post:
+      tags:
+        - user management
+      summary: 휴대폰 인증 요청 및 확인
+      operationId: 휴대폰_인증_요청_및_확인
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/signup/social/{provider}:
+    post:
+      tags:
+        - user management
+      summary: 소셜 회원가입 처리
+      operationId: 소셜_회원가입_처리
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /auth/login/email:
+    post:
+      tags:
+        - user management
+      summary: 일반 이메일 로그인
+      operationId: 일반_이메일_로그인
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /auth/login/social/{provider}:
+    post:
+      tags:
+        - user management
+      summary: 소셜 로그인 처리
+      operationId: 소셜_로그인_처리
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/find-id:
+    post:
+      tags:
+        - user management
+      summary: 아이디 찾기
+      operationId: 아이디_찾기
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/reset-password/request:
+    post:
+      tags:
+        - user management
+      summary: 비밀번호 재설정 요청
+      operationId: 비밀번호_재설정_요청
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/reset-password/confirm:
+    post:
+      tags:
+        - user management
+      summary: 비밀번호 재설정 완료
+      operationId: 비밀번호_재설정_완료
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{userId}:
+    delete:
+      tags:
+        - user management
+      summary: 회원 탈퇴 처리
+      operationId: 회원_탈퇴_처리
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /auth/logout:
+    post:
+      tags:
+        - user management
+      summary: 로그아웃
+      operationId: 로그아웃
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{userId}/profile:
+    put:
+      tags:
+        - user management
+      summary: 회원정보 수정
+      operationId: 회원정보_수정
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{userId}/residences:
+    post:
+      tags:
+        - user management
+      summary: 주거지 등록
+      operationId: 주거지_등록
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{parentId}/wards:
+    post:
+      tags:
+        - user management
+      summary: 피보호자 등록 및 연동
+      operationId: 피보호자_등록_및_연동
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+  /users/{userId}/link-code:
+    post:
+      tags:
+        - user management
+      summary: 보호자-피보호자 연동 코드 생성
+      operationId: 연동_코드_생성
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{userId}/linked-roles:
+    get:
+      tags:
+        - user management
+      summary: 연동된 보호자/피보호자 역할 조회
+      operationId: 연동_역할_조회
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
   /sos:
     put:
       tags:
@@ -123,7 +307,7 @@ paths:
         - petstore_auth:
             - write:pets
             - read:pets
-            
+
   /pet/{petId}:
     get:
       tags:
@@ -160,7 +344,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       security:
-        - api_key: []
+        - api_key: [ ]
         - petstore_auth:
             - write:pets
             - read:pets
@@ -317,7 +501,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       security:
-        - api_key: []
+        - api_key: [ ]
   /store/order:
     post:
       tags:
