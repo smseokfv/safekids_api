@@ -310,6 +310,14 @@ paths:
         - user management
       summary: 로그아웃
       operationId: 로그아웃
+      parameters:
+        - name: userId
+          in: path
+          description: 유저Id
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '200': { description: 성공적으로 처리되었습니다. }
         '400': { description: 잘못된 요청입니다. }
