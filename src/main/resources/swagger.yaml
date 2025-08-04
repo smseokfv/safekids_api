@@ -1,875 +1,1072 @@
 openapi: 3.0.0
 info:
-  title: Swagger Petstore - OpenAPI 3.0
-  description: |-
-    This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
-    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
-    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
-    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
-
-    Some useful links:
-    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
-    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
-  termsOfService: https://swagger.io/terms/
-  contact:
-    email: apiteam@swagger.io
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.12
+  title: SafeKids API
+  description: API for the SafeKids application, including safety, SOS, emergency, path, and helper services.
+  version: 1.0.0
 externalDocs:
-  description: Find out more about Swagger
-  url: https://swagger.io
+  description: Find out more about SafeKids
+  url: https://your-safe-kids-website.com
 servers:
-  - url: https://petstore3.swagger.io/api/v3
+  - url: https://your-safe-kids-api.com/api/v1
+
 tags:
-  - name: pet
-    description: Everything about your Pets
-    externalDocs:
-      description: Find out more
-      url: https://swagger.io
-  - name: store
-    description: Access to Petstore orders
-    externalDocs:
-      description: Find out more about our store
-      url: https://swagger.io
-  - name: user
-    description: Operations about user
+  - name: safety
+    description: Integrated safety information services.
+  - name: sos
+    description: SOS request and management services.
+  - name: emergency
+    description: Emergency situation handling services.
+  - name: paths
+    description: Path setting and deviation services.
+  - name: helper
+    description: Helper-related operations and services.
+
 paths:
-  /pet:
-    put:
+  # 3. 안전 서비스 (Safety Service)
+  /safety/cctv/realtime:
+    get:
       tags:
-        - pet
-      summary: Update an existing pet.
-      description: Update an existing pet by Id.
-      operationId: updatePet
+        - safety
+      summary: Get real-time CCTV locations and feeds.
+      description: Provides real-time CCTV locations and feeds near the child's current path.
+      operationId: getRealtimeCCTV
+      parameters:
+        - name: childId
+          in: query
+          description: The ID of the child to get CCTV information for.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: A list of CCTV locations and feeds.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CCTVInfo'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/cctv/private:
+    get:
+      tags:
+        - safety
+      summary: Get feeds from consented private CCTVs.
+      description: Provides feeds from private CCTVs that have been consented to.
+      operationId: getPrivateCCTV
+      parameters:
+        - name: childId
+          in: query
+          description: The ID of the child to get CCTV information for.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: A list of private CCTV feeds.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CCTVInfo'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/traffic-info:
+    get:
+      tags:
+        - safety
+      summary: Get traffic safety information.
+      description: Provides traffic safety information.
+      operationId: getTrafficInfo
+      responses:
+        '200':
+          description: Traffic safety information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrafficInfo'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/child-map/construction:
+    get:
+      tags:
+        - safety
+      summary: Get construction status from the Ministry of the Interior and Safety's child safety map.
+      description: Provides information on construction sites from the government's child safety map.
+      operationId: getChildMapConstruction
+      responses:
+        '200':
+          description: Construction status information.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConstructionInfo'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/device/{childId}/location:
+    get:
+      tags:
+        - safety
+      summary: Get real-time location from a child's mobile device.
+      description: Provides the real-time location of the child via their mobile device.
+      operationId: getChildDeviceLocation
+      parameters:
+        - name: childId
+          in: path
+          description: The ID of the child.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Real-time location data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '404':
+          description: Child not found.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /safety/device/{childId}/status:
+    get:
+      tags:
+        - safety
+      summary: Get real-time device status.
+      description: Provides real-time status of the child's mobile device (e.g., battery, network).
+      operationId: getChildDeviceStatus
+      parameters:
+        - name: childId
+          in: path
+          description: The ID of the child.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Device status data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceStatus'
+        '404':
+          description: Child not found.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/residence/{residenceId}/cctv:
+    get:
+      tags:
+        - safety
+      summary: Get CCTV feeds for a residential complex.
+      description: Provides CCTV feeds for a residential complex if a child's home is set there.
+      operationId: getResidenceCCTV
+      parameters:
+        - name: residenceId
+          in: path
+          description: The ID of the residential complex.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Residential complex CCTV feeds.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CCTVInfo'
+        '404':
+          description: Residence not found.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # SOS
+  /sos/{childId}/request:
+    post:
+      tags:
+        - sos
+      summary: 아동의 SOS 요청 시
+      description: The child presses the SOS button, and an alert is sent to guardians after 5 seconds.
+      operationId: requestSosByChild
+      parameters:
+        - name: childId
+          in: path
+          description: The ID of the child requesting help.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: SOS request successfully initiated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SosRequestResponse'
+        '400':
+          description: Invalid child ID or other request errors.
+        '404':
+          description: Child not found.
+        default:
+          description: Unexpected error.
+
+  /sos/{parentId}/cancel:
+    post:
+      tags:
+        - sos
+      summary: 보호자의 SOS요청 취소
+      description: A guardian cancels an active SOS request.
+      operationId: cancelSosByGuardian
+      parameters:
+        - name: parentId
+          in: path
+          description: The ID of the guardian who is canceling the request.
+          required: true
+          schema:
+            type: integer
+            format: int64
       requestBody:
-        description: Update an existent pet in the store
+        description: The SOS request ID to be canceled.
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Pet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Pet'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Pet'
-        required: true
+              type: object
+              properties:
+                sosRequestId:
+                  type: integer
+                  format: int64
+                  description: The ID of the SOS request to be canceled.
       responses:
         '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
+          description: SOS request successfully canceled.
         '400':
-          description: Invalid ID supplied
+          description: Invalid guardian ID or request ID.
         '404':
-          description: Pet not found
-        '422':
-          description: Validation exception
+          description: SOS request not found.
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
+          description: Unexpected error.
+  
+  /sos/{parentId}/request/helper:
     post:
       tags:
-        - pet
-      summary: Add a new pet to the store.
-      description: Add a new pet to the store.
-      operationId: addPet
+        - sos
+      summary: 보호자가 주변 헬퍼들에게 도움 요청
+      description: A guardian sends an SOS request to nearby helpers, including child info and a memo.
+      operationId: requestHelperByGuardian
+      parameters:
+        - name: parentId
+          in: path
+          description: The ID of the guardian requesting helper assistance.
+          required: true
+          schema:
+            type: integer
+            format: int64
       requestBody:
-        description: Create a new pet in the store
+        description: Details for the helper request.
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Pet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Pet'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Pet'
-        required: true
+              $ref: '#/components/schemas/HelperRequest'
       responses:
         '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
+          description: Helper request successfully sent.
         '400':
-          description: Invalid input
-        '422':
-          description: Validation exception
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
-  /pet/findByStatus:
-    get:
-      tags:
-        - pet
-      summary: Finds Pets by status.
-      description: Multiple status values can be provided with comma separated strings.
-      operationId: findPetsByStatus
-      parameters:
-        - name: status
-          in: query
-          description: Status values that need to be considered for filter
-          required: false
-          explode: true
-          schema:
-            type: string
-            default: available
-            enum:
-              - available
-              - pending
-              - sold
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid status value
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
-  /pet/findByTags:
-    get:
-      tags:
-        - pet
-      summary: Finds Pets by tags.
-      description: Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.
-      operationId: findPetsByTags
-      parameters:
-        - name: tags
-          in: query
-          description: Tags to filter by
-          required: false
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid tag value
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
-  /pet/{petId}:
-    get:
-      tags:
-        - pet
-      summary: Find pet by ID.
-      description: Returns a single pet.
-      operationId: getPetById
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to return
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid ID supplied
+          description: Invalid guardian ID or missing information.
         '404':
-          description: Pet not found
+          description: Guardian or child not found.
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - api_key: []
-        - petstore_auth:
-            - write:pets
-            - read:pets
+          description: Unexpected error.
+
+  /sos/{childId}/re-request:
     post:
       tags:
-        - pet
-      summary: Updates a pet in the store with form data.
-      description: Updates a pet resource based on the form data.
-      operationId: updatePetWithForm
+        - sos
+      summary: 아동의 SOS 재요청
+      description: A child re-requests SOS help after the initial request, subject to a time limit.
+      operationId: reRequestSosByChild
       parameters:
-        - name: petId
+        - name: childId
           in: path
-          description: ID of pet that needs to be updated
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: name
-          in: query
-          description: Name of pet that needs to be updated
-          schema:
-            type: string
-        - name: status
-          in: query
-          description: Status of pet that needs to be updated
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid input
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
-    delete:
-      tags:
-        - pet
-      summary: Deletes a pet.
-      description: Delete a pet.
-      operationId: deletePet
-      parameters:
-        - name: api_key
-          in: header
-          description: ''
-          required: false
-          schema:
-            type: string
-        - name: petId
-          in: path
-          description: Pet id to delete
+          description: The ID of the child re-requesting help.
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Pet deleted
-        '400':
-          description: Invalid pet value
-        default:
-          description: Unexpected error
+          description: SOS re-request successfully sent.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
-  /pet/{petId}/uploadImage:
+                $ref: '#/components/schemas/SosRequestResponse'
+        '400':
+          description: Re-request time limit not met or other request errors.
+        '404':
+          description: Child or previous SOS request not found.
+        default:
+          description: Unexpected error.
+
+  # 비상 상황 (Emergency)
+  /emergency/{childId}/start:
     post:
       tags:
-        - pet
-      summary: Uploads an image.
-      description: Upload image of the pet.
-      operationId: uploadFile
+        - emergency
+      summary: SOS 긴급상황 시작
+      description: Triggers an emergency response, including a 112 text report and SOS alert to helpers.
+      operationId: triggerEmergency
       parameters:
-        - name: petId
+        - name: childId
           in: path
-          description: ID of pet to update
+          description: The ID of the child.
           required: true
           schema:
             type: integer
             format: int64
-        - name: additionalMetadata
-          in: query
-          description: Additional Metadata
-          required: false
+      responses:
+        '200':
+          description: Emergency trigger successfully initiated.
+        '404':
+          description: Child not found.
+        default:
+          description: Unexpected error.
+
+  /emergency/{childId}/end:
+    post:
+      tags:
+        - emergency
+      summary: SOS 긴급상황 종료
+      description: Ends an emergency situation based on the judgment of the guardian or helper, and propagates the status.
+      operationId: endEmergency
+      parameters:
+        - name: childId
+          in: path
+          description: The ID of the child.
+          required: true
           schema:
-            type: string
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Emergency situation successfully ended.
+        '404':
+          description: Child not found.
+        default:
+          description: Unexpected error.
+
+  # 이동 경로 (Paths)
+  /paths/{guardianId}/set:
+    post:
+      tags:
+        - paths
+      summary: A guardian sets a path for their child.
+      description: Sets a start-to-end path for a child, which can be used for deviation alerts.
+      operationId: setChildPath
+      parameters:
+        - name: guardianId
+          in: path
+          description: The ID of the guardian setting the path.
+          required: true
+          schema:
+            type: integer
+            format: int64
       requestBody:
+        description: The path details to be set.
+        required: true
         content:
-          application/octet-stream:
+          application/json:
             schema:
-              type: string
-              format: binary
+              $ref: '#/components/schemas/Schedule'
       responses:
         '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
+          description: Path successfully set.
         '400':
-          description: No file uploaded
+          description: Invalid path data.
         '404':
-          description: Pet not found
+          description: Guardian or child not found.
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - petstore_auth:
-            - write:pets
-            - read:pets
-  /store/inventory:
+          description: Unexpected error.
+  
+  /paths/{guardianId}/favorites:
+    post:
+      tags:
+        - paths
+      summary: A guardian adds a favorite location.
+      description: Adds a frequently visited location to favorites.
+      operationId: addFavoriteLocation
+      parameters:
+        - name: guardianId
+          in: path
+          description: The ID of the guardian.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The location to be added as a favorite.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+      responses:
+        '200':
+          description: Favorite location successfully added.
+        '400':
+          description: Invalid location data.
+        '404':
+          description: Guardian not found.
+        default:
+          description: Unexpected error.
     get:
       tags:
-        - store
-      summary: Returns pet inventories by status.
-      description: Returns a map of status codes to quantities.
-      operationId: getInventory
+        - paths
+      summary: A guardian gets their favorite locations.
+      description: Retrieves a list of favorite locations set by the guardian.
+      operationId: getFavoriteLocations
+      parameters:
+        - name: guardianId
+          in: path
+          description: The ID of the guardian.
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
-          description: successful operation
+          description: A list of favorite locations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+        '404':
+          description: Guardian not found.
+        default:
+          description: Unexpected error.
+
+  /paths/{childId}/deviation:
+    get:
+      tags:
+        - paths
+      summary: A child's path deviation is detected.
+      description: An alert is sent to the guardian if the child deviates from the set path by a certain margin. This is a periodic check triggered by the backend.
+      operationId: getPathDeviationAlert
+      parameters:
+        - name: childId
+          in: path
+          description: The ID of the child.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Path deviation alert successfully sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviationAlert'
+        '404':
+          description: Child or set path not found.
+        default:
+          description: Unexpected error.
+  
+  # 헬퍼 (Helper)
+  /helper/{helperId}/sos-requests:
+    get:
+      tags:
+        - helper
+      summary: Get a list of SOS requests for a helper.
+      description: Retrieves a list of SOS requests received by the helper.
+      operationId: getHelperSosRequests
+      parameters:
+        - name: helperId
+          in: path
+          description: The ID of the helper.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: A list of SOS requests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SosRequest'
+        '404':
+          description: Helper not found.
+        default:
+          description: Unexpected error.
+
+  /helper/sos-requests/popup:
+    get:
+      tags:
+        - helper
+      summary: Get SOS requests for the main screen popup.
+      description: Retrieves SOS requests to be displayed as a popup on the main screen.
+      operationId: getSosRequestsForPopup
+      responses:
+        '200':
+          description: A list of SOS requests for the popup.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SosRequest'
+        '404':
+          description: No active SOS requests.
+        default:
+          description: Unexpected error.
+
+  /helper/sos-requests/{requestId}/participants:
+    get:
+      tags:
+        - helper
+      summary: Get the number of participants for an SOS request.
+      description: Retrieves the number of helpers participating in a specific SOS request.
+      operationId: getSosParticipants
+      parameters:
+        - name: requestId
+          in: path
+          description: The ID of the SOS request.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Number of participants.
           content:
             application/json:
               schema:
                 type: object
-                additionalProperties:
+                properties:
+                  count:
+                    type: integer
+                    format: int32
+        '404':
+          description: SOS request not found.
+        default:
+          description: Unexpected error.
+  
+  /helper/sos-requests/{requestId}/accept:
+    post:
+      tags:
+        - helper
+      summary: A helper accepts an SOS request.
+      description: A helper accepts an SOS request they can fulfill.
+      operationId: acceptSosRequest
+      parameters:
+        - name: requestId
+          in: path
+          description: The ID of the SOS request to accept.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: SOS request successfully accepted.
+        '400':
+          description: SOS request is already accepted by others or invalid.
+        '404':
+          description: SOS request not found.
+        default:
+          description: Unexpected error.
+  
+  /helper/sos-requests/{requestId}/shared-locations:
+    get:
+      tags:
+        - helper
+      summary: Get shared locations of participating helpers.
+      description: Retrieves the locations of all helpers participating in the same SOS request.
+      operationId: getSharedHelperLocations
+      parameters:
+        - name: requestId
+          in: path
+          description: The ID of the SOS request.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: A list of shared helper locations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+        '404':
+          description: SOS request not found.
+        default:
+          description: Unexpected error.
+
+  /helper/sos-requests/{requestId}/child-info:
+    get:
+      tags:
+        - helper
+      summary: Get child information for an accepted SOS request.
+      description: Retrieves detailed information about the child after accepting the SOS request.
+      operationId: getChildInfoForSos
+      parameters:
+        - name: requestId
+          in: path
+          description: The ID of the SOS request.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Detailed child information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildInfo'
+        '404':
+          description: SOS request not found or not accepted by the helper.
+        default:
+          description: Unexpected error.
+
+  /helper/{helperId}/adult-verification:
+    post:
+      tags:
+        - helper
+      summary: Verify an adult for the helper role.
+      description: Verifies the user as an adult to grant them the helper role.
+      operationId: verifyAdultForHelper
+      parameters:
+        - name: helperId
+          in: path
+          description: The ID of the helper to verify.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Adult verification details (e.g., ID card info).
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdultVerificationRequest'
+      responses:
+        '200':
+          description: Adult verification successfully initiated.
+        '400':
+          description: Invalid verification details.
+        '404':
+          description: Helper not found.
+        default:
+          description: Unexpected error.
+
+  /helper/{helperId}/child-found:
+    post:
+      tags:
+        - helper
+      summary: A helper reports a child has been found.
+      description: Notifies the guardian that the child has been found.
+      operationId: notifyChildFound
+      parameters:
+        - name: helperId
+          in: path
+          description: The ID of the helper who found the child.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The SOS request ID and child info.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requestId:
                   type: integer
-                  format: int32
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      security:
-        - api_key: []
-  /store/order:
-    post:
-      tags:
-        - store
-      summary: Place an order for a pet.
-      description: Place a new order in the store.
-      operationId: placeOrder
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Order'
+                  format: int64
+                childId:
+                  type: integer
+                  format: int64
       responses:
         '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
+          description: Guardian successfully notified.
         '400':
-          description: Invalid input
-        '422':
-          description: Validation exception
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /store/order/{orderId}:
-    get:
-      tags:
-        - store
-      summary: Find purchase order by ID.
-      description: For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.
-      operationId: getOrderById
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of order that needs to be fetched
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Order'
-        '400':
-          description: Invalid ID supplied
+          description: Invalid request ID or child ID.
         '404':
-          description: Order not found
+          description: Helper or SOS request not found.
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      tags:
-        - store
-      summary: Delete purchase order by identifier.
-      description: For valid response try integer IDs with value < 1000. Anything above 1000 or nonintegers will generate API errors.
-      operationId: deleteOrder
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of the order that needs to be deleted
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: order deleted
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Order not found
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user:
-    post:
-      tags:
-        - user
-      summary: Create user.
-      description: This can only be done by the logged in user.
-      operationId: createUser
-      requestBody:
-        description: Created user object
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/User'
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/createWithList:
-    post:
-      tags:
-        - user
-      summary: Creates list of users with given input array.
-      description: Creates list of users with given input array.
-      operationId: createUsersWithListInput
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/User'
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/login:
-    get:
-      tags:
-        - user
-      summary: Logs user into the system.
-      description: Log into the system.
-      operationId: loginUser
-      parameters:
-        - name: username
-          in: query
-          description: The user name for login
-          required: false
-          schema:
-            type: string
-        - name: password
-          in: query
-          description: The password for login in clear text
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          headers:
-            X-Rate-Limit:
-              description: calls per hour allowed by the user
-              schema:
-                type: integer
-                format: int32
-            X-Expires-After:
-              description: date in UTC when token expires
-              schema:
-                type: string
-                format: date-time
-          content:
-            application/xml:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: string
-        '400':
-          description: Invalid username/password supplied
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/logout:
-    get:
-      tags:
-        - user
-      summary: Logs out current logged in user session.
-      description: Log user out of the system.
-      operationId: logoutUser
-      parameters: []
-      responses:
-        '200':
-          description: successful operation
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/{username}:
-    get:
-      tags:
-        - user
-      summary: Get user by user name.
-      description: Get user detail based on username.
-      operationId: getUserByName
-      parameters:
-        - name: username
-          in: path
-          description: The name that needs to be fetched. Use user1 for testing
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          description: Invalid username supplied
-        '404':
-          description: User not found
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          description: Unexpected error.
+
+  /helper/{helperId}/status:
     put:
       tags:
-        - user
-      summary: Update user resource.
-      description: This can only be done by the logged in user.
-      operationId: updateUser
+        - helper
+      summary: Activate or deactivate the helper role.
+      description: Sets the helper status to active or inactive.
+      operationId: setHelperStatus
       parameters:
-        - name: username
+        - name: helperId
           in: path
-          description: name that need to be deleted
+          description: The ID of the helper.
           required: true
           schema:
-            type: string
+            type: integer
+            format: int64
       requestBody:
-        description: Update an existent user in the store
+        description: The new status of the helper.
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/User'
+              type: object
+              properties:
+                isActive:
+                  type: boolean
       responses:
         '200':
-          description: successful operation
-        '400':
-          description: bad request
+          description: Helper status successfully updated.
         '404':
-          description: user not found
+          description: Helper not found.
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
+          description: Unexpected error.
+
+  /helper/sos-requests/{requestId}/leave:
+    post:
       tags:
-        - user
-      summary: Delete user resource.
-      description: This can only be done by the logged in user.
-      operationId: deleteUser
+        - helper
+      summary: A helper leaves an SOS request.
+      description: A helper stops participating in an SOS request.
+      operationId: leaveSosRequest
       parameters:
-        - name: username
+        - name: requestId
           in: path
-          description: The name that needs to be deleted
+          description: The ID of the SOS request to leave.
           required: true
           schema:
-            type: string
+            type: integer
+            format: int64
+      requestBody:
+        description: Helper ID to be removed.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                helperId:
+                  type: integer
+                  format: int64
       responses:
         '200':
-          description: User deleted
-        '400':
-          description: Invalid username supplied
+          description: Helper successfully removed from the request.
         '404':
-          description: User not found
+          description: SOS request or helper not found.
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          description: Unexpected error.
+
+  /helper/sos-requests/{requestId}/rejoin:
+    post:
+      tags:
+        - helper
+      summary: A helper rejoins an SOS request.
+      description: A helper who previously left an SOS request can rejoin.
+      operationId: rejoinSosRequest
+      parameters:
+        - name: requestId
+          in: path
+          description: The ID of the SOS request to rejoin.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Helper ID to rejoin.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                helperId:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: Helper successfully rejoined the request.
+        '400':
+          description: Helper is already in the request.
+        '404':
+          description: SOS request or helper not found.
+        default:
+          description: Unexpected error.
+
+  /helper/{helperId}/nickname:
+    put:
+      tags:
+        - helper
+      summary: A helper sets their nickname.
+      description: Sets a nickname for a helper to distinguish them from others in an SOS request.
+      operationId: setHelperNickname
+      parameters:
+        - name: helperId
+          in: path
+          description: The ID of the helper.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: The new nickname.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+      responses:
+        '200':
+          description: Nickname successfully updated.
+        '400':
+          description: Invalid nickname provided.
+        '404':
+          description: Helper not found.
+        default:
+          description: Unexpected error.
+
 components:
   schemas:
-    Order:
+    CCTVInfo:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        petId:
-          type: integer
-          format: int64
-          example: 198772
-        quantity:
-          type: integer
-          format: int32
-          example: 7
-        shipDate:
-          type: string
-          format: date-time
-        status:
-          type: string
-          description: Order Status
-          example: approved
-          enum:
-            - placed
-            - approved
-            - delivered
-        complete:
-          type: boolean
-      xml:
-        name: order
-    Category:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        name:
-          type: string
-          example: Dogs
-      xml:
-        name: category
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        username:
-          type: string
-          example: theUser
-        firstName:
-          type: string
-          example: John
-        lastName:
-          type: string
-          example: James
-        email:
-          type: string
-          example: john@email.com
-        password:
-          type: string
-          example: '12345'
-        phone:
-          type: string
-          example: '12345'
-        userStatus:
-          type: integer
-          description: User Status
-          format: int32
-          example: 1
-      xml:
-        name: user
-    Tag:
-      type: object
-      properties:
-        id:
+        cctvId:
           type: integer
           format: int64
         name:
           type: string
-      xml:
-        name: tag
-    Pet:
-      required:
-        - name
-        - photoUrls
+        location:
+          $ref: '#/components/schemas/Location'
+        streamUrl:
+          type: string
+          description: URL to the real-time video stream.
+
+    TrafficInfo:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        name:
-          type: string
-          example: doggie
-        category:
-          $ref: '#/components/schemas/Category'
-        photoUrls:
-          type: array
-          xml:
-            wrapped: true
-          items:
-            type: string
-            xml:
-              name: photoUrl
-        tags:
-          type: array
-          xml:
-            wrapped: true
-          items:
-            $ref: '#/components/schemas/Tag'
-        status:
-          type: string
-          description: pet status in the store
-          enum:
-            - available
-            - pending
-            - sold
-      xml:
-        name: pet
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        type:
-          type: string
         message:
           type: string
-      xml:
-        name: '##default'
+          description: General traffic safety information.
+        incident:
+          type: array
+          items:
+            type: string
+          description: A list of recent traffic incidents.
+
+    ConstructionInfo:
+      type: object
+      properties:
+        constructionId:
+          type: integer
+          format: int64
+        siteName:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        status:
+          type: string
+          description: Current status of the construction.
+    
+    Location:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
+      description: Geographic coordinates and timestamp.
+      
+    DeviceStatus:
+      type: object
+      properties:
+        batteryLevel:
+          type: number
+          format: float
+          description: Battery level in percentage.
+        isCharging:
+          type: boolean
+        networkStatus:
+          type: string
+          description: Current network status (e.g., WiFi, 5G, LTE).
+    
+    SosRequestResponse:
+      type: object
+      properties:
+        sosRequestId:
+          type: integer
+          format: int64
+          description: The ID of the created SOS request.
+        message:
+          type: string
+          description: A confirmation message for the SOS request.
+
+    HelperRequest:
+      type: object
+      properties:
+        sosRequestId:
+          type: integer
+          format: int64
+          description: The ID of the SOS request being handled.
+        childId:
+          type: integer
+          format: int64
+          description: The ID of the child in distress.
+        memo:
+          type: string
+          description: An optional memo or additional information for the helpers.
+          example: "Child is near the park entrance, wearing a red jacket."
+          
+    Schedule:
+      type: object
+      properties:
+        childId:
+          type: integer
+          format: int64
+        startPlace:
+          type: string
+        startLocation:
+          $ref: '#/components/schemas/Location'
+        endPlace:
+          type: string
+        endLocation:
+          $ref: '#/components/schemas/Location'
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        days:
+          type: string
+          description: Days of the week (e.g., Mon,Tue,Wed).
+          
+    DeviationAlert:
+      type: object
+      properties:
+        deviationId:
+          type: integer
+          format: int64
+        childId:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+        deviationLocation:
+          $ref: '#/components/schemas/Location'
+          
+    SosRequest:
+      type: object
+      properties:
+        sosRequestId:
+          type: integer
+          format: int64
+        childId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          description: The status of the SOS request (e.g., active, accepted, canceled).
+        timestamp:
+          type: string
+          format: date-time
+          
+    ChildInfo:
+      type: object
+      properties:
+        childId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        age:
+          type: integer
+        physicalDescription:
+          type: string
+          description: Description of the child's appearance.
+        lastKnownLocation:
+          $ref: '#/components/schemas/Location'
+    
+    AdultVerificationRequest:
+      type: object
+      properties:
+        idCardType:
+          type: string
+          description: Type of ID card (e.g., resident registration card, driver's license).
+        idCardNumber:
+          type: string
+          description: ID card number for verification.
+
     Error:
       type: object
       properties:
@@ -880,34 +1077,3 @@ components:
       required:
         - code
         - message
-  requestBodies:
-    Pet:
-      description: Pet object that needs to be added to the store
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Pet'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/Pet'
-    UserArray:
-      description: List of user object
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/User'
-  securitySchemes:
-    petstore_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
-          scopes:
-            "write:pets": modify pets in your account
-            "read:pets": read your pets
-    api_key:
-      type: apiKey
-      name: api_key
-      in: header
