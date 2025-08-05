@@ -22,8 +22,7 @@ tags:
     description: Integrated safety information services.
   - name: sos
     description: SOS request and management services.
-  - name: emergency
-    description: Emergency situation handling services.
+
   - name: paths
     description: Path setting and deviation services.
   - name: helper
@@ -587,30 +586,26 @@ paths:
 
 
   # 3. 안전 서비스 (Safety Service)
-  /safety/cctv/realtime:
+  /safety/cctv/public:
     get:
       tags:
         - safety
-      summary: Get real-time CCTV locations and feeds.
-      description: Provides real-time CCTV locations and feeds near the child's current path.
-      operationId: getRealtimeCCTV
-      parameters:
-        - name: childId
-          in: query
-          description: The ID of the child to get CCTV information for.
-          required: true
-          schema:
-            type: integer
-            format: int64
+      summary: 공공 CCTV 조회
+      description: 공공 CCTV 위치 및 피드를 제공합니다.
+      operationId: getPublicCCTV
       responses:
         '200':
-          description: A list of CCTV locations and feeds.
+          description: 공공 CCTV 위치 및 피드 목록
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/CCTVInfo'
+        '401':
+          description: 인증 실패
+        '403':
+          description: 접근 권한 없음
         default:
           description: Unexpected error.
           content:
@@ -622,26 +617,22 @@ paths:
     get:
       tags:
         - safety
-      summary: Get feeds from consented private CCTVs.
-      description: Provides feeds from private CCTVs that have been consented to.
+      summary: 개인 CCTV 조회
+      description: 개인 CCTV 위치 및 피드를 제공합니다. (소유자 또는 허가된 사용자만 접근 가능)
       operationId: getPrivateCCTV
-      parameters:
-        - name: childId
-          in: query
-          description: The ID of the child to get CCTV information for.
-          required: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '200':
-          description: A list of private CCTV feeds.
+          description: 개인 CCTV 위치 및 피드 목록
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CCTVInfo'
+                  $ref: '#/components/schemas/PrivateCCTVInfo'
+        '401':
+          description: 인증 실패
+        '403':
+          description: 접근 권한 없음 (소유자가 아니거나 허가되지 않음)
         default:
           description: Unexpected error.
           content:
@@ -649,16 +640,85 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /safety/cctv/residence/{residenceId}:
+    get:
+      tags:
+        - safety
+      summary: 주거지 주변 CCTV 조회
+      description: 주거지 주변 CCTV 조회
+      operationId: getResidenceCCTV
+      parameters:
+        - name: residenceId
+          in: path
+          description: 주거지 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 주거지 주변 CCTV
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CCTVInfo'
+        '404':
+          description: Residence not found.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/cctv/residence:
+    post:
+      tags:
+        - safety
+      summary: 주거지 CCTV 등록(보류-어떤식으로 등록할지 미정)
+      description: 새로운 주거지에 대한 CCTV 정보를 등록합니다.
+      operationId: registerResidenceCCTV
+      requestBody:
+        description: CCTV 등록 정보
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResidenceCCTVRegistration'
+      responses:
+        '201':
+          description: CCTV 등록 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CCTVInfo'
+        '400':
+          description: 잘못된 CCTV 정보
+        '401':
+          description: 인증 실패
+        '403':
+          description: 접근 권한 없음 (해당 주거지 소유자가 아님)
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+
   /safety/traffic-info:
     get:
       tags:
         - safety
-      summary: Get traffic safety information.
-      description: Provides traffic safety information.
+      summary: 교통 안전 정보 조회
+      description: 교통 안전 정보 조회(교통 안전 정보(UTIC활용))
       operationId: getTrafficInfo
       responses:
         '200':
-          description: Traffic safety information.
+          description: 교통 안전 정보
           content:
             application/json:
               schema:
@@ -674,12 +734,12 @@ paths:
     get:
       tags:
         - safety
-      summary: Get construction status from the Ministry of the Interior and Safety's child safety map.
-      description: Provides information on construction sites from the government's child safety map.
+      summary: 건설 현장 정보 조회
+      description: 아동 경로 주변의 건설 현장 정보를 조회합니다.(행안부 어린이 안전지도의 공사현황 제공)
       operationId: getChildMapConstruction
       responses:
         '200':
-          description: Construction status information.
+          description: 건설 현장 정보
           content:
             application/json:
               schema:
@@ -687,7 +747,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ConstructionInfo'
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
           content:
             application/json:
               schema:
@@ -697,20 +757,20 @@ paths:
     get:
       tags:
         - safety
-      summary: Get real-time location from a child's mobile device.
-      description: Provides the real-time location of the child via their mobile device.
+      summary: 아동의 실시간 위치 조회
+      description: 아동의 실시간 위치 조회
       operationId: getChildDeviceLocation
       parameters:
         - name: childId
           in: path
-          description: The ID of the child.
+          description: 아동 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Real-time location data.
+          description: 실시간 위치 데이터
           content:
             application/json:
               schema:
@@ -728,20 +788,20 @@ paths:
     get:
       tags:
         - safety
-      summary: Get real-time device status.
-      description: Provides real-time status of the child's mobile device (e.g., battery, network).
+      summary: 아동의 실시간 기기 상태 조회(보류-차후에 추가 예정)
+      description: 아동의 실시간 기기 상태 조회(베터리, 네트워크 등)
       operationId: getChildDeviceStatus
       parameters:
         - name: childId
           in: path
-          description: The ID of the child.
+          description: 아동 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Device status data.
+          description: 기기 상태 데이터
           content:
             application/json:
               schema:
@@ -755,32 +815,143 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /safety/residence/{residenceId}/cctv:
+  /safety/child/{childId}/location/history:
     get:
       tags:
         - safety
-      summary: Get CCTV feeds for a residential complex.
-      description: Provides CCTV feeds for a residential complex if a child's home is set there.
-      operationId: getResidenceCCTV
+      summary: 아동 위치 히스토리 조회
+      description: 아동의 과거 위치 기록을 조회합니다.
+      operationId: getChildLocationHistory
       parameters:
-        - name: residenceId
+        - name: childId
           in: path
-          description: The ID of the residential complex.
+          description: 아동 ID
           required: true
           schema:
             type: integer
             format: int64
+        - name: startTime
+          in: query
+          description: '조회 시작 시간 (ISO 8601 형식: 2024-08-05T00:00:00Z)'
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          description: '조회 종료 시간 (ISO 8601 형식: 2024-08-05T23:59:59Z)'
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: '조회할 위치 기록 수 (기본값: 100)'
+          required: false
+          schema:
+            type: integer
+            default: 100
       responses:
         '200':
-          description: Residential complex CCTV feeds.
+          description: 위치 히스토리 목록
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CCTVInfo'
+                  $ref: '#/components/schemas/LocationHistory'
         '404':
-          description: Residence not found.
+          description: Child not found.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /safety/child/{childId}/location:
+    post:
+      tags:
+        - safety
+      summary: 아동 위치 정보 저장
+      description: 아동의 실시간 위치 정보를 저장합니다.
+      operationId: saveChildLocation
+      parameters:
+        - name: childId
+          in: path
+          description: 아동 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: 위치 정보
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationData'
+      responses:
+        '201':
+          description: 위치 정보 저장 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationData'
+        '400':
+          description: 잘못된 위치 정보
+        '404':
+          description: Child not found.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+
+  /safety/child/{childId}/alerts:
+    get:
+      tags:
+        - safety
+      summary: 아동 안전 알림 조회
+      description: 아동과 관련된 안전 알림 목록을 조회합니다. (3-0-1)
+      operationId: getChildSafetyAlerts
+      parameters:
+        - name: childId
+          in: path
+          description: 아동 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          description: 알림 상태 필터 (active, resolved, all)
+          required: false
+          schema:
+            type: string
+            enum: [active, resolved, all]
+            default: all
+        - name: limit
+          in: query
+          description: '조회할 알림 수 (기본값: 50)'
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: 안전 알림 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SafetyAlert'
+        '404':
+          description: Child not found.
         default:
           description: Unexpected error.
           content:
@@ -794,19 +965,19 @@ paths:
       tags:
         - sos
       summary: 아동의 SOS 요청 시
-      description: The child presses the SOS button, and an alert is sent to guardians after 5 seconds.
+      description: 아동이 SOS 버튼을 누르면 5초 후 보호자에게 알림이 전송됩니다.
       operationId: requestSosByChild
       parameters:
         - name: childId
           in: path
-          description: The ID of the child requesting help.
+          description: 아동 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: SOS request successfully initiated.
+          description: SOS 요청 성공
           content:
             application/json:
               schema:
@@ -818,23 +989,98 @@ paths:
         default:
           description: Unexpected error.
 
-  /sos/{parentId}/cancel:
+  /sos/{childId}/cancel:
     post:
       tags:
         - sos
-      summary: 보호자의 SOS요청 취소
-      description: A guardian cancels an active SOS request.
-      operationId: cancelSosByGuardian
+      summary: 아동의 SOS요청 취소
+      description: 아동이 활성화된 SOS요청을 직접 취소합니다.
+      operationId: cancelSosByChild
       parameters:
-        - name: parentId
+        - name: childId
           in: path
-          description: The ID of the guardian who is canceling the request.
+          description: 아동 ID
           required: true
           schema:
             type: integer
             format: int64
       requestBody:
-        description: The SOS request ID to be canceled.
+        description: SOS요청 취소 정보
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sosRequestId:
+                  type: integer
+                  format: int64
+                  description: 취소할 SOS 요청의 ID.
+      responses:
+        '200':
+          description: SOS 요청 취소 성공
+        '400':
+          description: 아동 ID 또는 요청 ID 오류
+        '404':
+          description: SOS 요청 또는 아동 정보 없음
+        default:
+          description: 예상치 못한 오류        
+
+# SOS
+  /sos/{parentId}/request:
+    post:
+      tags:
+        - sos
+      summary: 보호자의 SOS요청
+      description: 보호자가 SOS 버튼을 클릭하면 5초 이내에 취소하지 않으면 SOS 요청이 진행되고, 112 자동 문자 신고가 완료됩니다. 아동 정보(이름, 성별, 출생년도, 키, 특이사항)가 헬퍼들에게 SOS 요청과 함께 전송됩니다.
+      operationId: requestSosByGuardian
+      parameters:
+        - name: parentId
+          in: path
+          description: SOS를 요청하는 보호자 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: SOS 요청에 필요한 정보
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                childId:
+                  type: integer
+                  format: int64
+                  description: SOS 요청 대상 아동의 ID
+      responses:
+        '200':
+          description: 보호자의 SOS 요청 성공 (5초 후 자동 진행)
+        '400':
+          description: 보호자 ID 또는 아동 ID가 유효하지 않거나 누락됨
+        '404':
+          description: 보호자 또는 아동 정보를 찾을 수 없음
+        default:
+          description: 예상치 못한 오류
+
+  /sos/{parentId}/cancel:
+    post:
+      tags:
+        - sos
+      summary: 보호자의 SOS요청 취소
+      description: 보호자가 활성화된 SOS요청을 취소합니다.
+      operationId: cancelSosByGuardian
+      parameters:
+        - name: parentId
+          in: path
+          description: 보호자 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: SOS요청 취소
         required: true
         content:
           application/json:
@@ -847,31 +1093,31 @@ paths:
                   description: The ID of the SOS request to be canceled.
       responses:
         '200':
-          description: SOS request successfully canceled.
+          description: SOS 요청 취소 성공
         '400':
-          description: Invalid guardian ID or request ID.
+          description: 보호자 ID 또는 요청 ID 오류
         '404':
-          description: SOS request not found.
+          description: SOS 요청 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /sos/{parentId}/request/helper:
     post:
       tags:
         - sos
       summary: 보호자가 주변 헬퍼들에게 도움 요청
-      description: A guardian sends an SOS request to nearby helpers, including child info and a memo.
+      description: 보호자가 주변 헬퍼들에게 도움 요청을 보냅니다.
       operationId: requestHelperByGuardian
       parameters:
         - name: parentId
           in: path
-          description: The ID of the guardian requesting helper assistance.
+          description: 보호자 ID
           required: true
           schema:
             type: integer
             format: int64
       requestBody:
-        description: Details for the helper request.
+        description: 헬퍼 요청 정보
         required: true
         content:
           application/json:
@@ -879,20 +1125,20 @@ paths:
               $ref: '#/components/schemas/HelperRequest'
       responses:
         '200':
-          description: Helper request successfully sent.
+          description: 헬퍼 요청 성공
         '400':
-          description: Invalid guardian ID or missing information.
+          description: 보호자 ID 또는 정보 누락
         '404':
-          description: Guardian or child not found.
+          description: 보호자 또는 아동 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /sos/{childId}/re-request:
     post:
       tags:
         - sos
-      summary: 아동의 SOS 재요청
-      description: A child re-requests SOS help after the initial request, subject to a time limit.
+      summary: SOS 재요청 (아동)
+      description: 아동이 이전 SOS 요청 후 추가 도움을 재요청합니다. 보호자는 헬퍼들에게 재요청을 할 수 있습니다.
       operationId: reRequestSosByChild
       parameters:
         - name: childId
@@ -902,85 +1148,99 @@ paths:
           schema:
             type: integer
             format: int64
+      requestBody:
+        description: 재요청 정보
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requesterType:
+                  type: string
+                  enum: [child, guardian]
+                  description: 재요청자 유형 (아동 또는 보호자)
+                additionalInfo:
+                  type: string
+                  description: 추가 정보 또는 상황 설명
       responses:
         '200':
-          description: SOS re-request successfully sent.
+          description: SOS 재요청 성공
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SosRequestResponse'
         '400':
-          description: Re-request time limit not met or other request errors.
+          description: 재요청 시간 제한 미충족 또는 기타 요청 오류
         '404':
-          description: Child or previous SOS request not found.
+          description: Child or previous SOS request not found. 아동 또는 이전 SOS 요청 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
-  # 비상 상황 (Emergency)
-  /emergency/{childId}/start:
+  /sos/{parentId}/re-request:
     post:
       tags:
-        - emergency
-      summary: SOS 긴급상황 시작
-      description: Triggers an emergency response, including a 112 text report and SOS alert to helpers.
-      operationId: triggerEmergency
+        - sos
+      summary: SOS 재요청 (보호자)
+      description: 보호자가 이전 SOS 요청 후 헬퍼들에게 추가 도움을 재요청합니다.
+      operationId: reRequestSosByGuardian
       parameters:
-        - name: childId
+        - name: parentId
           in: path
-          description: The ID of the child.
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: Emergency trigger successfully initiated.
-        '404':
-          description: Child not found.
-        default:
-          description: Unexpected error.
-
-  /emergency/{childId}/end:
-    post:
-      tags:
-        - emergency
-      summary: SOS 긴급상황 종료
-      description: Ends an emergency situation based on the judgment of the guardian or helper, and propagates the status.
-      operationId: endEmergency
-      parameters:
-        - name: childId
-          in: path
-          description: The ID of the child.
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: Emergency situation successfully ended.
-        '404':
-          description: Child not found.
-        default:
-          description: Unexpected error.
-
-  # 이동 경로 (Paths)
-  /paths/{guardianId}/set:
-    post:
-      tags:
-        - paths
-      summary: A guardian sets a path for their child.
-      description: Sets a start-to-end path for a child, which can be used for deviation alerts.
-      operationId: setChildPath
-      parameters:
-        - name: guardianId
-          in: path
-          description: The ID of the guardian setting the path.
+          description: The ID of the guardian re-requesting help.
           required: true
           schema:
             type: integer
             format: int64
       requestBody:
-        description: The path details to be set.
+        description: 재요청 정보
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                additionalInfo:
+                  type: string
+                  description: 추가 정보 또는 상황 설명
+                urgencyLevel:
+                  type: string
+                  enum: [low, medium, high, critical]
+                  description: 긴급도 수준
+      responses:
+        '200':
+          description: SOS 재요청 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SosRequestResponse'
+        '400':
+          description: 재요청 시간 제한 미충족 또는 기타 요청 오류
+        '404':
+          description: Guardian or previous SOS request not found. 보호자 또는 이전 SOS 요청 없음
+        default:
+          description: 예상치 못한 오류
+
+
+
+  # 이동 경로 (Paths)
+  /paths/{parentId}/set:
+    post:
+      tags:
+        - paths
+      summary: 보호자가 아동의 이동 경로 설정
+      description: 아동의 이동 경로를 설정합니다.
+      operationId: setChildPath
+      parameters:
+        - name: parentId
+          in: path
+          description: 보호자 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: 이동 경로 설정
         required: true
         content:
           application/json:
@@ -988,31 +1248,31 @@ paths:
               $ref: '#/components/schemas/Schedule'
       responses:
         '200':
-          description: Path successfully set.
+          description: 이동 경로 설정 성공
         '400':
-          description: Invalid path data.
+          description: 이동 경로 데이터 오류
         '404':
-          description: Guardian or child not found.
+          description: 보호자 또는 아동 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
-  /paths/{guardianId}/favorites:
+  /paths/{parentId}/favorites:
     post:
       tags:
         - paths
-      summary: A guardian adds a favorite location.
-      description: Adds a frequently visited location to favorites.
+      summary: 보호자가 즐겨찾기 위치 추가
+      description: 자주 방문하는 위치를 즐겨찾기에 추가합니다.
       operationId: addFavoriteLocation
       parameters:
-        - name: guardianId
+        - name: parentId
           in: path
-          description: The ID of the guardian.
+          description: 보호자 ID
           required: true
           schema:
             type: integer
             format: int64
       requestBody:
-        description: The location to be added as a favorite.
+        description: 즐겨찾기 위치 추가
         required: true
         content:
           application/json:
@@ -1020,30 +1280,30 @@ paths:
               $ref: '#/components/schemas/Location'
       responses:
         '200':
-          description: Favorite location successfully added.
+          description: 즐겨찾기 위치 추가 성공
         '400':
-          description: Invalid location data.
+          description: 즐겨찾기 위치 데이터 오류
         '404':
-          description: Guardian not found.
+          description: 보호자 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
     get:
       tags:
         - paths
-      summary: A guardian gets their favorite locations.
-      description: Retrieves a list of favorite locations set by the guardian.
+      summary: 보호자가 즐겨찾기 위치 조회
+      description: 보호자가 설정한 즐겨찾기 위치 목록을 조회합니다.
       operationId: getFavoriteLocations
       parameters:
-        - name: guardianId
+        - name: parentId
           in: path
-          description: The ID of the guardian.
+          description: 보호자 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: A list of favorite locations.
+          description: 즐겨찾기 위치 목록
           content:
             application/json:
               schema:
@@ -1051,7 +1311,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Location'
         '404':
-          description: Guardian not found.
+          description: Parent not found.
         default:
           description: Unexpected error.
 
@@ -1059,48 +1319,117 @@ paths:
     get:
       tags:
         - paths
-      summary: A child's path deviation is detected.
-      description: An alert is sent to the guardian if the child deviates from the set path by a certain margin. This is a periodic check triggered by the backend.
+      summary: 아동의 이동 경로 벗어남 감지
+      description: 아동이 설정된 경로를 벗어나면 보호자에게 알림을 보냅니다. 이는 백엔드에 의해 주기적으로 확인됩니다.
       operationId: getPathDeviationAlert
       parameters:
         - name: childId
           in: path
-          description: The ID of the child.
+          description: 아동 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Path deviation alert successfully sent.
+          description: 이동 경로 벗어남 감지 알림 성공
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviationAlert'
         '404':
-          description: Child or set path not found.
+          description: 아동 또는 설정된 경로 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   # 헬퍼 (Helper)
+  /helper/{childId}/nearby:
+    get:
+      tags:
+        - helper
+      summary: 아동 주변 헬퍼 목록 조회
+      description: 아동 위치 주변의 헬퍼 목록을 조회합니다. SOS 요청 전에 미리 확인할 수 있습니다.
+      operationId: getChildNearbyHelpers
+      parameters:
+        - name: childId
+          in: path
+          description: 아동 ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: radius
+          in: query
+          description: '검색 반경 (km, 기본값: 5)'
+          required: false
+          schema:
+            type: number
+            format: float
+            default: 5.0
+      responses:
+        '200':
+          description: 아동 주변 헬퍼 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    helperId:
+                      type: integer
+                      format: int64
+                      description: 헬퍼 ID
+                    name:
+                      type: string
+                      description: 헬퍼 이름
+                    distance:
+                      type: number
+                      format: float
+                      description: 아동 위치로부터의 거리 (km)
+                    estimatedTime:
+                      type: integer
+                      description: 예상 도착 시간 (분)
+                    isAvailable:
+                      type: boolean
+                      description: 현재 도움 가능 여부
+                    rating:
+                      type: number
+                      format: float
+                      description: 헬퍼 평점 (1-5)
+                    totalHelps:
+                      type: integer
+                      description: 총 도움 횟수
+        '404':
+          description: 아동 정보 없음
+        default:
+          description: 예상치 못한 오류
+
   /helper/{helperId}/sos-requests:
     get:
       tags:
         - helper
-      summary: Get a list of SOS requests for a helper.
-      description: Retrieves a list of SOS requests received by the helper.
+      summary: 헬퍼가 받은 SOS요청 목록 조회
+      description: 헬퍼가 받은 SOS요청 목록 조회
       operationId: getHelperSosRequests
       parameters:
         - name: helperId
           in: path
-          description: The ID of the helper.
+          description: 헬퍼 ID
           required: true
+          schema:
+            type: integer
+            format: int64
+        - name: childId
+          in: query
+          description: 아동 ID
+          required: false
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: A list of SOS requests.
+          description: SOS요청 목록
           content:
             application/json:
               schema:
@@ -1108,20 +1437,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/SosRequest'
         '404':
-          description: Helper not found.
+          description: 헬퍼 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /helper/sos-requests/popup:
     get:
       tags:
         - helper
-      summary: Get SOS requests for the main screen popup.
-      description: Retrieves SOS requests to be displayed as a popup on the main screen.
+      summary: 메인 화면 팝업 SOS요청 조회
+      description: 메인 화면 팝업 SOS요청 조회
       operationId: getSosRequestsForPopup
       responses:
         '200':
-          description: A list of SOS requests for the popup.
+          description: 팝업 SOS요청 목록
           content:
             application/json:
               schema:
@@ -1129,61 +1458,89 @@ paths:
                 items:
                   $ref: '#/components/schemas/SosRequest'
         '404':
-          description: No active SOS requests.
+          description: 활성화된 SOS요청 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /helper/sos-requests/{requestId}/participants:
     get:
       tags:
         - helper
-      summary: Get the number of participants for an SOS request.
-      description: Retrieves the number of helpers participating in a specific SOS request.
+      summary: SOS요청 참여 가능 헬퍼 목록 및 참여자 수 조회
+      description: 특정 SOS요청에 대해 참여 가능한 헬퍼 목록과 현재 참여 중인 헬퍼 수를 조회합니다. UI에서는 참여 가능 리스트가 보이고 우측에 "+1" 형태로 참여 중인 헬퍼 수가 표시됩니다.
       operationId: getSosParticipants
       parameters:
         - name: requestId
           in: path
-          description: The ID of the SOS request.
+          description: SOS요청 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Number of participants.
+          description: 참여 가능 헬퍼 목록 및 참여자 수
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  count:
+                  availableHelpers:
+                    type: array
+                    description: 참여 가능한 헬퍼 목록
+                    items:
+                      type: object
+                      properties:
+                        helperId:
+                          type: integer
+                          format: int64
+                          description: 헬퍼 ID
+                        name:
+                          type: string
+                          description: 헬퍼 이름
+                        distance:
+                          type: number
+                          format: float
+                          description: SOS 요청 위치로부터의 거리 (km)
+                        estimatedTime:
+                          type: integer
+                          description: 예상 도착 시간 (분)
+                        isParticipating:
+                          type: boolean
+                          description: 현재 참여 중인지 여부
+                  participatingCount:
                     type: integer
                     format: int32
+                    description: 현재 참여 중인 헬퍼 수
+                  totalAvailable:
+                    type: integer
+                    format: int32
+                    description: 참여 가능한 총 헬퍼 수
         '404':
-          description: SOS request not found.
+          description: SOS요청 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /helper/sos-requests/{requestId}/accept:
     post:
       tags:
         - helper
-      summary: A helper accepts an SOS request.
-      description: A helper accepts an SOS request they can fulfill.
+      summary: 헬퍼가 SOS요청 수락
+      description: 헬퍼가 수락 가능한 SOS요청 수락
       operationId: acceptSosRequest
       parameters:
         - name: requestId
           in: path
-          description: The ID of the SOS request to accept.
+          description: SOS요청 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: SOS request successfully accepted.
+          description: SOS요청 수락 성공
         '400':
-          description: SOS request is already accepted by others or invalid.
+          description: SOS요청 이미 다른 헬퍼에 의해 수락되었거나 유효하지 않음
         '404':
           description: SOS request not found.
         default:
@@ -1193,20 +1550,20 @@ paths:
     get:
       tags:
         - helper
-      summary: Get shared locations of participating helpers.
-      description: Retrieves the locations of all helpers participating in the same SOS request.
+      summary: 특정 SOS요청의 참여자 위치 조회
+      description: 특정 SOS요청의 참여자 위치 조회
       operationId: getSharedHelperLocations
       parameters:
         - name: requestId
           in: path
-          description: The ID of the SOS request.
+          description: SOS요청 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: A list of shared helper locations.
+          description: 참여자 위치 목록
           content:
             application/json:
               schema:
@@ -1214,146 +1571,42 @@ paths:
                 items:
                   $ref: '#/components/schemas/Location'
         '404':
-          description: SOS request not found.
+          description: SOS요청 없음
         default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /helper/sos-requests/{requestId}/child-info:
     get:
       tags:
         - helper
-      summary: Get child information for an accepted SOS request.
-      description: Retrieves detailed information about the child after accepting the SOS request.
+      summary: 특정 SOS요청의 아동 정보 조회
+      description: 특정 SOS요청의 아동 정보 조회
       operationId: getChildInfoForSos
       parameters:
         - name: requestId
           in: path
-          description: The ID of the SOS request.
+          description: SOS요청 ID
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Detailed child information.
+          description: 아동 정보
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChildInfo'
         '404':
-          description: SOS request not found or not accepted by the helper.
+          description: SOS요청 없음 또는 헬퍼에 의해 수락되지 않음
         default:
-          description: Unexpected error.
-
-  /helper/{helperId}/adult-verification:
-    post:
-      tags:
-        - helper
-      summary: Verify an adult for the helper role.
-      description: Verifies the user as an adult to grant them the helper role.
-      operationId: verifyAdultForHelper
-      parameters:
-        - name: helperId
-          in: path
-          description: The ID of the helper to verify.
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        description: Adult verification details (e.g., ID card info).
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdultVerificationRequest'
-      responses:
-        '200':
-          description: Adult verification successfully initiated.
-        '400':
-          description: Invalid verification details.
-        '404':
-          description: Helper not found.
-        default:
-          description: Unexpected error.
-
-  /helper/{helperId}/child-found:
-    post:
-      tags:
-        - helper
-      summary: A helper reports a child has been found.
-      description: Notifies the guardian that the child has been found.
-      operationId: notifyChildFound
-      parameters:
-        - name: helperId
-          in: path
-          description: The ID of the helper who found the child.
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        description: The SOS request ID and child info.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                requestId:
-                  type: integer
-                  format: int64
-                childId:
-                  type: integer
-                  format: int64
-      responses:
-        '200':
-          description: Guardian successfully notified.
-        '400':
-          description: Invalid request ID or child ID.
-        '404':
-          description: Helper or SOS request not found.
-        default:
-          description: Unexpected error.
-
-  /helper/{helperId}/status:
-    put:
-      tags:
-        - helper
-      summary: Activate or deactivate the helper role.
-      description: Sets the helper status to active or inactive.
-      operationId: setHelperStatus
-      parameters:
-        - name: helperId
-          in: path
-          description: The ID of the helper.
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        description: The new status of the helper.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                isActive:
-                  type: boolean
-      responses:
-        '200':
-          description: Helper status successfully updated.
-        '404':
-          description: Helper not found.
-        default:
-          description: Unexpected error.
+          description: 예상치 못한 오류
 
   /helper/sos-requests/{requestId}/leave:
     post:
       tags:
         - helper
-      summary: A helper leaves an SOS request.
+      summary: 헬퍼가 SOS참여 중단
       description: A helper stops participating in an SOS request.
       operationId: leaveSosRequest
       parameters:
@@ -1387,7 +1640,7 @@ paths:
     post:
       tags:
         - helper
-      summary: A helper rejoins an SOS request.
+      summary: 헬퍼가 SOS요청 재참여
       description: A helper who previously left an SOS request can rejoin.
       operationId: rejoinSosRequest
       parameters:
@@ -1419,41 +1672,6 @@ paths:
         default:
           description: Unexpected error.
 
-  /helper/{helperId}/nickname:
-    put:
-      tags:
-        - helper
-      summary: A helper sets their nickname.
-      description: Sets a nickname for a helper to distinguish them from others in an SOS request.
-      operationId: setHelperNickname
-      parameters:
-        - name: helperId
-          in: path
-          description: The ID of the helper.
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        description: The new nickname.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                nickname:
-                  type: string
-      responses:
-        '200':
-          description: Nickname successfully updated.
-        '400':
-          description: Invalid nickname provided.
-        '404':
-          description: Helper not found.
-        default:
-          description: Unexpected error.
-
 components:
   schemas:
     CCTVInfo:
@@ -1464,11 +1682,79 @@ components:
           format: int64
         name:
           type: string
+          description: CCTV 이름
         location:
           $ref: '#/components/schemas/Location'
         streamUrl:
           type: string
           description: URL to the real-time video stream.
+        managementAgency:
+          type: string
+          description: 관리 기관명
+        installationDate:
+          type: string
+          format: date-time
+          description: 설치 날짜
+
+    PrivateCCTVInfo:
+      type: object
+      properties:
+        cctvId:
+          type: integer
+          format: int64
+        name:
+          type: string
+          description: CCTV 이름
+        location:
+          $ref: '#/components/schemas/Location'
+        streamUrl:
+          type: string
+          description: URL to the real-time video stream.
+        ownerId:
+          type: integer
+          format: int64
+          description: 소유자 ID
+        ownerName:
+          type: string
+          description: 소유자 이름
+        accessLevel:
+          type: string
+          enum: [owner, authorized, emergency]
+          description: 접근 권한 레벨
+        isActive:
+          type: boolean
+          description: 활성화 상태
+
+    ResidentialCCTVInfo:
+      type: object
+      properties:
+        cctvId:
+          type: integer
+          format: int64
+        name:
+          type: string
+          description: CCTV 이름
+        location:
+          $ref: '#/components/schemas/Location'
+        streamUrl:
+          type: string
+          description: URL to the real-time video stream.
+        complexName:
+          type: string
+          description: 주거단지명
+        buildingNumber:
+          type: string
+          description: 건물 번호
+        floor:
+          type: integer
+          description: 층수
+        accessLevel:
+          type: string
+          enum: [resident, security, emergency]
+          description: 접근 권한 레벨
+        isActive:
+          type: boolean
+          description: 활성화 상태
 
     TrafficInfo:
       type: object
@@ -1476,11 +1762,13 @@ components:
         message:
           type: string
           description: General traffic safety information.
+          example: "주의 - 교통사고 발생"
         incident:
           type: array
           items:
             type: string
           description: A list of recent traffic incidents.
+          example: ["강남대로 3km 지점에서 차량 충돌사고", "학교 앞 횡단보도에서 보행자 사고"]
 
     ConstructionInfo:
       type: object
@@ -1508,6 +1796,9 @@ components:
         timestamp:
           type: string
           format: date-time
+        is_moving:
+          type: boolean
+          description: 아동의 이동 상태
       description: Geographic coordinates and timestamp.
 
     DeviceStatus:
@@ -1545,10 +1836,13 @@ components:
           type: integer
           format: int64
           description: The ID of the child in distress.
+        childInfo:
+          $ref: '#/components/schemas/ChildInfo'
+          description: 아동 정보 (이름, 성별, 출생년도, 키, 특이사항)
         memo:
           type: string
           description: An optional memo or additional information for the helpers.
-          example: "Child is near the park entrance, wearing a red jacket."
+          example: 아동은 공원 입구 근처에 있으며, 빨간색 재킷을 입고 있습니다.
 
     Schedule:
       type: object
@@ -1613,8 +1907,24 @@ components:
           format: int64
         name:
           type: string
+          description: 아동 이름
+        gender:
+          type: string
+          enum: [male, female]
+          description: 아동 성별
+        birthYear:
+          type: integer
+          description: 출생년도
+        height:
+          type: number
+          format: float
+          description: 키 (cm)
+        specialNotes:
+          type: string
+          description: 특이사항 (의료 정보, 알레르기 등)
         age:
           type: integer
+          description: 나이 (계산된 값)
         physicalDescription:
           type: string
           description: Description of the child's appearance.
@@ -1641,3 +1951,212 @@ components:
       required:
         - code
         - message
+
+    SafetyDashboard:
+      type: object
+      properties:
+        childId:
+          type: integer
+          format: int64
+        currentLocation:
+          $ref: '#/components/schemas/Location'
+        deviceStatus:
+          $ref: '#/components/schemas/DeviceStatus'
+        activeAlerts:
+          type: integer
+          description: 활성화된 알림 수
+        safetyScore:
+          type: number
+          format: float
+          description: 안전 점수 (0-100)
+        lastUpdate:
+          type: string
+          format: date-time
+
+    LocationHistory:
+      type: object
+      properties:
+        locationId:
+          type: integer
+          format: int64
+        location:
+          $ref: '#/components/schemas/Location'
+        accuracy:
+          type: number
+          format: float
+          description: 위치 정확도 (미터)
+        speed:
+          type: number
+          format: float
+          description: 이동 속도 (km/h)
+
+    LocationData:
+      type: object
+      properties:
+        routeId:
+          type: integer
+          format: int64
+          description: 경로 ID
+        latitude:
+          type: number
+          format: double
+          description: 위도
+        longitude:
+          type: number
+          format: double
+          description: 경도
+        timestamp:
+          type: string
+          format: date-time
+          description: 위치 기록 시간
+        isMoving:
+          type: boolean
+          description: 이동 상태
+
+    ResidenceCCTVRegistration:
+      type: object
+      properties:
+        residenceId:
+          type: integer
+          format: int64
+          description: 주거지 ID
+        name:
+          type: string
+          description: CCTV 이름
+        location:
+          $ref: '#/components/schemas/Location'
+        streamUrl:
+          type: string
+          description: 실시간 비디오 스트림 URL
+        complexName:
+          type: string
+          description: 주거단지명
+        buildingNumber:
+          type: string
+          description: 건물 번호
+        floor:
+          type: integer
+          description: 층수
+        accessLevel:
+          type: string
+          enum: [resident, security, emergency]
+          description: 접근 권한 레벨
+        isActive:
+          type: boolean
+          description: 활성화 상태
+          default: true
+
+    SafetyAlert:
+      type: object
+      properties:
+        alertId:
+          type: integer
+          format: int64
+        childId:
+          type: integer
+          format: int64
+        alertType:
+          type: string
+          enum: [location_deviation, safety_zone_exit, device_offline, sos_triggered]
+          description: 알림 타입
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: 알림 심각도
+        message:
+          type: string
+          description: 알림 메시지
+        location:
+          $ref: '#/components/schemas/Location'
+        timestamp:
+          type: string
+          format: date-time
+        isResolved:
+          type: boolean
+          description: 해결 여부
+
+    WeatherInfo:
+      type: object
+      properties:
+        temperature:
+          type: number
+          format: float
+          description: 온도 (섭씨)
+        humidity:
+          type: number
+          format: float
+          description: 습도 (%)
+        weatherCondition:
+          type: string
+          description: 날씨 상태 (맑음, 흐림, 비 등)
+        windSpeed:
+          type: number
+          format: float
+          description: 풍속 (m/s)
+        visibility:
+          type: number
+          format: float
+          description: 가시거리 (km)
+        timestamp:
+          type: string
+          format: date-time
+
+    EmergencyContact:
+      type: object
+      properties:
+        contactId:
+          type: integer
+          format: int64
+        name:
+          type: string
+          description: 연락처 이름
+        phoneNumber:
+          type: string
+          description: 전화번호
+        relationship:
+          type: string
+          description: 관계 (부모, 보호자, 친척 등)
+        isPrimary:
+          type: boolean
+          description: 주요 연락처 여부
+        createdAt:
+          type: string
+          format: date-time
+
+    SafetyReport:
+      type: object
+      properties:
+        reportId:
+          type: integer
+          format: int64
+        childId:
+          type: integer
+          format: int64
+        reportType:
+          type: string
+          enum: [daily, weekly, monthly]
+        reportDate:
+          type: string
+          format: date
+        totalDistance:
+          type: number
+          format: float
+          description: 총 이동 거리 (km)
+        safetyScore:
+          type: number
+          format: float
+          description: 안전 점수 (0-100)
+        alertsCount:
+          type: integer
+          description: 알림 발생 횟수
+        sosCount:
+          type: integer
+          description: SOS 요청 횟수
+        zonesVisited:
+          type: array
+          items:
+            type: string
+          description: 방문한 안전 구역 목록
+        summary:
+          type: string
+          description: 리포트 요약
