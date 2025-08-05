@@ -30,9 +30,7 @@ tags:
     description: Helper-related operations and services.
 
 paths:
-  # 3. 안전 서비스 (Safety Service)
-  /safety/cctv/realtime:
-    get:
+
   /users/signup/email:
     post:
       tags:
@@ -185,8 +183,6 @@ paths:
                     type: string
                   refreshToken:
                     type: string
-                  user:
-                    $ref: '#/components/schemas/User'
         '400': { description: 잘못된 요청입니다. }
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
@@ -590,8 +586,9 @@ paths:
         '500': { description: 서버 오류 }
 
 
-  /sos:
-    put:
+  # 3. 안전 서비스 (Safety Service)
+  /safety/cctv/realtime:
+    get:
       tags:
         - safety
       summary: Get real-time CCTV locations and feeds.
