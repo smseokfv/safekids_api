@@ -35,8 +35,8 @@ paths:
     post:
       tags:
         - user management
-      summary: 이메일 중복 확인 후 회원가입
-      operationId: 이메일_중복_확인_후_회원가입
+      summary: 일반 회원 회원가입
+      operationId: 일반회원 회원가입
       parameters:
         - name: name
           in: query
@@ -91,6 +91,63 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
+  /users/verify/phone-confirm:
+    post:
+      tags:
+        - user management
+      summary: 휴대폰 인증 번호 확인
+      operationId: 휴대폰_인증_번호_확인
+      parameters:
+        - name: confirmNumber
+          in: query
+          description: 전화번호 인증번호
+          required: true
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/verify/email:
+    post:
+      tags:
+        - user management
+      summary: 이메일 중복 확인
+      operationId: 이메일 중복 확인
+      parameters:
+        - name: email
+          in: query
+          description: 이메일
+          required: true
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/verify/social/phone:
+    post:
+      tags:
+        - user management
+      summary: 소셜 가입 시 기존 가입자 휴대폰 확인
+      operationId: 휴대폰 중복 확인
+      parameters:
+        - name: phone
+          in: query
+          description: phone
+          required: true
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
   /users/signup/social/{provider}:
     post:
       tags:
@@ -100,7 +157,7 @@ paths:
       parameters:
         - name: provider
           in: path
-          description: 소셜종류
+          description: 제공 소셜
           required: true
           schema:
             type: string
@@ -117,16 +174,48 @@ paths:
           schema:
             type: integer
             format: int64
+        - name: phone
+          in: query
+          description: 전화번호
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: 이름
+          schema:
+            type: string
       responses:
         '200': { description: 성공적으로 처리되었습니다. }
         '400': { description: 잘못된 요청입니다. }
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
-  /auth/login/email:
+  /user/role-setting/{userId}:
     post:
       tags:
         - user management
+      summary: 역할 설정
+      operationId: 역할 설정
+      parameters:
+        - name: userId
+          in: path
+          description: 유저Id
+          type: integer
+          required: true
+        - name: role
+          in: query
+          description: 역할
+          type: string
+      responses:
+        '200': { description: 설정이 성공적으로 저장되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '500': { description: 서버 오류 }
+
+  /users/login/email:
+    post:
+      tags:
+        - users management
       summary: 일반 이메일 로그인
       operationId: 일반_이메일_로그인
       parameters:
@@ -148,7 +237,7 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
-  /auth/login/social:
+  /users/login/social:
     post:
       tags:
         - user management
@@ -291,7 +380,7 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
-  /auth/logout:
+  /users/logout:
     post:
       tags:
         - user management
@@ -341,6 +430,25 @@ paths:
                   type: string
               required:
                 - name
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/verify/nickname:
+    post:
+      tags:
+        - user management
+      summary: 닉네임 중복 확인
+      operationId: 닉네임 중복 확인
+      parameters:
+        - name: nickname
+          in: path
+          description: 닉네임
+          required: true
+          schema:
+            type: string
       responses:
         '200': { description: 성공적으로 처리되었습니다. }
         '400': { description: 잘못된 요청입니다. }
@@ -411,27 +519,70 @@ paths:
             schema:
               type: object
               properties:
+                childId:
+                  type: integer
+                  description: 아동Id
                 childName:
                   type: string
                   description: 아동 이름
-                birthdate:
+                childProfileImage:
                   type: string
-                  format: date
+                  description: 아동 프로필 이미지
+              required:
+                - childId
+                - childName
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{childId}/modify:
+    post:
+      tags:
+        - user management
+      summary: 아동 상세 정보 변경
+      operationId: 아동 상세 정보 변경
+      parameters:
+        - name: childId
+          in: path
+          description: 아동 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                childName:
+                  type: string
+                  description: 아동 이름
                 gender:
                   type: string
-                  enum: [ MALE, FEMALE ]
+                  enum: [남자,여자]
+                  description: 성별
+                birthYear:
+                  type: integer
+                  format: int64
+                  description: 태어난 연도
                 height:
                   type: integer
-                features:
+                  format: int64
+                  description: 아동 키
+                childProfileImage:
                   type: string
-                  description: 특징 메모
-                photoUrl:
-                  type: string
-                  description: 사진 URL
+                  description: 아동 프로필 이미지
+                childPhotoUrl:
+                  type: array
+                  items:
+                    type: string
+                    description: 아이 사진 url
               required:
+                - childId
                 - childName
-                - birthdate
-                - gender
       responses:
         '200': { description: 성공적으로 처리되었습니다. }
         '400': { description: 잘못된 요청입니다. }
@@ -458,12 +609,12 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
-  /users/{userId}/linked-roles:
+  /users/{userId}/linked-children:
     get:
       tags:
         - user management
-      summary: 연동된 보호자/피보호자 역할 조회
-      operationId: 연동_역할_조회
+      summary: 연동된 피보호자 조회
+      operationId: 연동_피보호자_조회
       parameters:
         - name: userId
           in: path
@@ -478,6 +629,44 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
+  /users/{userId}/linked-parents:
+    get:
+      tags:
+        - user management
+      summary: 연동된 보호자 조회
+      operationId: 연동_보호자_조회
+      parameters:
+        - name: userId
+          in: path
+          description: 유저Id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /users/{code}/linked_child:
+    get:
+      tags:
+        - user management
+      summary: 랜덤코드-피보호자 조회
+      operationId: 랜덤코드-피보호자 조회
+      parameters:
+        - name: code
+          in: path
+          description: 피보호자 생성 코드
+          required: true
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
 
   /settings/notifications:
     put:
@@ -494,21 +683,23 @@ paths:
               properties:
                 push:
                   type: boolean
-                sos:
+                offRoute:
                   type: boolean
-                activity:
+                traffic:
                   type: boolean
-                vibration:
-                  type: boolean
-                sound:
+                constructor:
                   type: boolean
               required:
                 - push
-                - sos
+                - offRoute
+                - traffic
+                - constructor
       responses:
         '200': { description: 설정이 성공적으로 저장되었습니다. }
         '400': { description: 잘못된 요청입니다. }
         '500': { description: 서버 오류 }
+
+
 
   /permissions/request:
     post:
