@@ -22,7 +22,6 @@ tags:
     description: 안전정보 서비스
   - name: sos
     description: SOS 요청 및 관리 서비스
-
   - name: paths
     description: 이동경로 설정 및 편차 서비스
   - name: helper
@@ -283,6 +282,19 @@ paths:
         - user management
       summary: 아이디 찾기
       operationId: 아이디_찾기
+      parameters:
+        - name: name
+          in: query
+          description: 이름
+          required: true
+          schema:
+            type: string
+        - name: phone
+          in: query
+          description: 전화번호
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -311,6 +323,19 @@ paths:
         - user management
       summary: 비밀번호 재설정 요청
       operationId: 비밀번호_재설정_요청
+      parameters:
+        - name: email
+          in: query
+          description: 이메일
+          required: true
+          schema:
+            type: string
+        - name: phone
+          in: query
+          description: 전화번호
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -339,6 +364,25 @@ paths:
         - user management
       summary: 비밀번호 재설정 완료
       operationId: 비밀번호_재설정_완료
+      parameters:
+        - name: email
+          in: query
+          description: 이메일
+          required: true
+          schema:
+            type: string
+        - name: newPassword
+          in: query
+          description: 새비밀번호
+          required: true
+          schema:
+            type: string
+        - name: confirmPassword
+          in: query
+          description: 비밀번호확인
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -414,6 +458,30 @@ paths:
           required: true
           schema:
             type: integer
+        - name: name
+          in: query
+          description: 이름
+          required: true
+          schema:
+            type: string
+        - name: phone
+          in: query
+          description: 전화번호
+          required: true
+          schema:
+            type: string
+        - name: nickname
+          in: query
+          description: 닉네임
+          required: true
+          schema:
+            type: string
+        - name: profileImage
+          in: query
+          description: 프로필이미지경로
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -459,20 +527,32 @@ paths:
       tags:
         - user management
       summary: 로그아웃
-      operationId: 로그아웃
-      parameters:
-        - name: userId
-          in: path
-          description: 유저Id
-          required: true
-          schema:
-            type: integer
-            format: int64
+      description: 클라이언트의 Access Token 및 Refresh Token을 무효화하여 로그아웃 처리합니다.
+      operationId: logoutUser
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  description: 만료시킬 Refresh Token
+              required:
+                - refreshToken
       responses:
-        '200': { description: 성공적으로 처리되었습니다. }
-        '400': { description: 잘못된 요청입니다. }
-        '401': { description: 인증 실패 }
-        '500': { description: 서버 오류 }
+        '200':
+          description: 성공적으로 로그아웃되었습니다.
+        '400':
+          description: 잘못된 요청입니다.
+        '401':
+          description: 인증 실패 (유효하지 않은 토큰 등)
+        '500':
+          description: 서버 오류
+
 
   /users/{userId}/helper-status:
     patch:
@@ -487,6 +567,12 @@ paths:
           required: true
           schema:
             type: integer
+        - name: isHelper
+          in: query
+          description: 헬퍼여부
+          required: true
+          schema:
+            type: boolean
       requestBody:
         required: true
         content:
