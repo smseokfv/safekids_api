@@ -201,12 +201,14 @@ paths:
         - name: userId
           in: path
           description: 유저Id
-          type: integer
+          schema:
+            type: integer
           required: true
         - name: role
           in: query
           description: 역할
-          type: string
+          schema:
+            type: string
       responses:
         '200': { description: 설정이 성공적으로 저장되었습니다. }
         '400': { description: 잘못된 요청입니다. }
@@ -215,7 +217,7 @@ paths:
   /users/login/email:
     post:
       tags:
-        - users management
+        - user management
       summary: 일반 이메일 로그인
       operationId: 일반_이메일_로그인
       parameters:
@@ -242,7 +244,7 @@ paths:
       tags:
         - user management
       summary: 소셜 로그인 처리
-      operationId: loginWithSocial
+      operationId: 소셜 로그인 처리
       requestBody:
         required: true
         content:
@@ -362,6 +364,79 @@ paths:
         '500': { description: 서버 오류 }
 
   /users/{userId}:
+    get:
+      tags:
+        - user management
+      summary: 회원정보 조회
+      operationId: getUserProfile
+      parameters:
+        - name: userId
+          in: path
+          description: 조회할 사용자 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 사용자 정보 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  nickname:
+                    type: string
+                  profileImage:
+                    type: string
+                  role:
+                    type: string
+                  isHelper:
+                    type: boolean
+        '404': { description: 사용자를 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+    
+    put:
+      tags:
+        - user management
+      summary: 회원정보 수정
+      operationId: 회원정보_수정
+      parameters:
+        - name: userId
+          in: path
+          description: 유저 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                nickname:
+                  type: string
+                profileImage:
+                  type: string
+              required:
+                - name
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
     delete:
       tags:
         - user management
@@ -400,16 +475,16 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
-  /users/{userId}/profile:
-    put:
+  /users/{userId}/helper-status:
+    patch:
       tags:
         - user management
-      summary: 회원정보 수정
-      operationId: 회원정보_수정
+      summary: 헬퍼 활성화/비활성화 설정
+      operationId: 헬퍼 활성화/비활성화 설정
       parameters:
         - name: userId
           in: path
-          description: 유저 ID
+          description: 사용자 ID
           required: true
           schema:
             type: integer
@@ -420,20 +495,47 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                isHelper:
+                  type: boolean
+              required:
+                - isHelper
+      responses:
+        '200': { description: 헬퍼 상태가 성공적으로 변경되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '404': { description: 사용자를 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+
+  /users/{userId}/verify/adult:
+    post:
+      tags:
+        - user management
+      summary: 성인 인증 요청 (헬퍼 전환용)
+      operationId: 성인 인증 요청 (헬퍼 전환용)
+      parameters:
+        - name: userId
+          in: path
+          description: 사용자 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
                   type: string
-                phone:
-                  type: string
-                nickname:
-                  type: string
-                profileImage:
+                  enum: [ pass, sms ]
+                identityToken:
                   type: string
               required:
-                - name
+                - method
+                - identityToken
       responses:
-        '200': { description: 성공적으로 처리되었습니다. }
-        '400': { description: 잘못된 요청입니다. }
-        '401': { description: 인증 실패 }
+        '200': { description: 성인 인증 성공 }
+        '400': { description: 인증 실패 또는 잘못된 요청 }
         '500': { description: 서버 오류 }
 
   /users/verify/nickname:
@@ -455,49 +557,237 @@ paths:
         '401': { description: 인증 실패 }
         '500': { description: 서버 오류 }
 
+  /residences:
+    post:
+      tags:
+        - user management
+      summary: 시스템 주거단지 등록
+      operationId: createResidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                residenceName:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+              required:
+                - address
+                - residenceName
+                - latitude
+                - longitude
+      responses:
+        '200': { description: 주거단지가 등록되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '500': { description: 서버 오류 }
+
+  /residences/{residenceId}:
+    delete:
+      tags:
+        - user management
+      summary: 시스템 주거단지 삭제
+      operationId: deleteResidence
+      parameters:
+        - name: residenceId
+          in: path
+          description: 주거단지 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': { description: 주거단지가 삭제되었습니다. }
+        '404': { description: 단지를 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+
+
+  /residences/regions:
+    get:
+      tags:
+        - user management
+      summary: 도/광역시 목록 조회
+      operationId: getProvinces
+      responses:
+        '200':
+          description: 도/광역시 목록 반환
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '500':
+          description: 서버 오류
+
+  /residences/regions/{province}/cities:
+    get:
+      tags:
+        - user management
+      summary: 시/구/군 목록 조회
+      operationId: getCities
+      parameters:
+        - name: province
+          in: path
+          required: true
+          description: 도/광역시명
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 시/구/군 목록 반환
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '500':
+          description: 서버 오류
+
+  /residences/regions/{province}/{city}/towns:
+    get:
+      tags:
+        - user management
+      summary: 읍/면/동 목록 조회
+      operationId: getTowns
+      parameters:
+        - name: province
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: city
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 읍/면/동 목록 반환
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '500':
+          description: 서버 오류
+
+  /residences/search:
+    get:
+      tags:
+        - user management
+      summary: 읍/면/동 기준 아파트(단지) 목록 검색
+      operationId: searchResidences
+      parameters:
+        - name: province
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: city
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: town
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 검색된 주거단지 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    residenceId:
+                      type: integer
+                    residenceName:
+                      type: string
+                    address:
+                      type: string
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+        '400': { description: 잘못된 요청입니다. }
+        '500': { description: 서버 오류 }
 
   /users/{userId}/residences:
     post:
       tags:
         - user management
-      summary: 주거지 등록
-      operationId: 주거지_등록
+      summary: 사용자 주거단지 선택
+      operationId: selectUserResidence
       parameters:
         - name: userId
           in: path
-          description: 유저 ID
           required: true
           schema:
             type: integer
-        - name: address
-          in: query
-          description: 주소
-          required: true
-          schema:
-            type: string
-        - name: residenceName
-          in: query
-          description: 주거단지 이름
-          required: true
-          schema:
-            type: string
-        - name: latitude
-          in: query
-          description: 위도
-          required: true
-          schema:
-            type: number
-        - name: longitude
-          in: query
-          description: 경도
-          required: true
-          schema:
-            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                residenceId:
+                  type: integer
+              required:
+                - residenceId
       responses:
-        '200': { description: 성공적으로 처리되었습니다. }
+        '200': { description: 사용자 주거단지가 성공적으로 설정되었습니다. }
         '400': { description: 잘못된 요청입니다. }
-        '401': { description: 인증 실패 }
+        '404': { description: 주거단지를 찾을 수 없습니다. }
         '500': { description: 서버 오류 }
+
+  /users/{userId}/residence:
+    get:
+      tags:
+        - user management
+      summary: 사용자의 선택된 주거단지 조회
+      operationId: getUserResidence
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 사용자의 주거단지 정보 반환
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  residenceId:
+                    type: integer
+                  residenceName:
+                    type: string
+                  address:
+                    type: string
+                  latitude:
+                    type: number
+                  longitude:
+                    type: number
+        '404': { description: 사용자가 주거단지를 선택하지 않았습니다. }
+        '500': { description: 서버 오류 }
+
+
+
 
   /users/{parentId}/wards:
     post:
@@ -562,7 +852,7 @@ paths:
                   description: 아동 이름
                 gender:
                   type: string
-                  enum: [남자,여자]
+                  enum: [ 남자,여자 ]
                   description: 성별
                 birthYear:
                   type: integer
@@ -658,7 +948,7 @@ paths:
       parameters:
         - name: code
           in: path
-          description: 피보호자 생성 코드
+          description: 랜덤 생성 코드
           required: true
           schema:
             type: string
@@ -751,6 +1041,80 @@ paths:
                       type: string
         '500': { description: 서버 오류 }
 
+  /support/faq/write:
+    post:
+      tags:
+        - support
+      summary: faq 작성
+      operationId: faqWrite
+      parameters:
+        - name: question
+          in: query
+          description: 질문
+          required: true
+          schema:
+            type: string
+        - name: answer
+          in: query
+          description: 대답
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+  
+  /support/faq/{faqId}:
+    put:
+      tags:
+        - support
+      summary: FAQ 전체 수정
+      operationId: updateFaq
+      parameters:
+        - name: faqId
+          in: path
+          required: true
+          description: 수정할 FAQ ID
+          schema:
+            type: integer
+        - name: question
+          in: query
+          required: true
+          description: 질문
+          schema:
+            type: string
+        - name: answer
+          in: query
+          required: true
+          description: 답변
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 수정되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '404': { description: 해당 FAQ를 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+
+    delete:
+      tags:
+        - support
+      summary: FAQ 삭제
+      operationId: deleteFaq
+      parameters:
+        - name: faqId
+          in: path
+          required: true
+          description: 삭제할 FAQ ID
+          schema:
+            type: integer
+      responses:
+        '200': { description: 성공적으로 삭제되었습니다. }
+        '401': { description: 인증 실패 }
+        '404': { description: 해당 FAQ를 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+
   /support/notices:
     get:
       tags:
@@ -775,6 +1139,81 @@ paths:
                       type: string
                       format: date-time
         '500': { description: 서버 오류 }
+
+  /support/notice/write:
+    post:
+      tags:
+        - support
+      summary: 공지사항 작성
+      operationId: noticeWrite
+      parameters:
+        - name: title
+          in: query
+          description: 제목
+          required: true
+          schema:
+            type: string
+        - name: content
+          in: query
+          description: 내용
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 처리되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '500': { description: 서버 오류 }
+
+  /support/notice/{noticeId}:
+    put:
+      tags:
+        - support
+      summary: 공지사항 전체 수정
+      operationId: updateNotice
+      parameters:
+        - name: noticeId
+          in: path
+          required: true
+          description: 수정할 공지사항 ID
+          schema:
+            type: integer
+        - name: title
+          in: query
+          required: true
+          description: 제목
+          schema:
+            type: string
+        - name: content
+          in: query
+          required: true
+          description: 내용
+          schema:
+            type: string
+      responses:
+        '200': { description: 성공적으로 수정되었습니다. }
+        '400': { description: 잘못된 요청입니다. }
+        '401': { description: 인증 실패 }
+        '404': { description: 해당 공지사항을 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+
+    delete:
+      tags:
+        - support
+      summary: 공지사항 삭제
+      operationId: deleteNotice
+      parameters:
+        - name: noticeId
+          in: path
+          required: true
+          description: 삭제할 공지사항 ID
+          schema:
+            type: integer
+      responses:
+        '200': { description: 성공적으로 삭제되었습니다. }
+        '401': { description: 인증 실패 }
+        '404': { description: 해당 공지사항을 찾을 수 없습니다. }
+        '500': { description: 서버 오류 }
+
 
 
   # 3. 안전 서비스 (Safety Service)
