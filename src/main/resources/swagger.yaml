@@ -874,7 +874,7 @@ paths:
 
 
 
-  /users/{parentId}/wards:
+  /users/{parentId}/child:
     post:
       tags:
         - user management
