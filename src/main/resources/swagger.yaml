@@ -1158,7 +1158,7 @@ paths:
               properties:
                 requesterType:
                   type: string
-                  enum: [child, guardian]
+                  enum: [child, parent]
                   description: 재요청자 유형 (아동 또는 보호자)
                 additionalInfo:
                   type: string
@@ -1635,41 +1635,6 @@ paths:
           description: SOS request not found.
         default:
           description: Unexpected error.
-
-  /helper/sos-requests/{requestId}/reject:
-    post:
-      tags:
-        - helper
-      summary: 헬퍼가 SOS요청 거절
-      description: 헬퍼가 SOS요청을 거절합니다
-      operationId: rejectSosRequest
-      parameters:
-        - name: requestId
-          in: path
-          description: SOS요청 ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        description: 거절 사유
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                reason:
-                  type: string
-                  description: 거절 사유
-                  example: "현재 다른 SOS요청 처리 중"
-      responses:
-        '200':
-          description: SOS요청 거절 성공
-        '404':
-          description: SOS요청 없음
-        default:
-          description: 예상치 못한 오류
 
   /helper/sos-requests/{requestId}/shared-locations:
     get:
